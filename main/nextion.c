@@ -99,80 +99,80 @@ void NextionTXTask(void* arg)
             NextionSendData(TX_TASK_TAG, "Control.t1.txt=\"ON\"\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.t1.pco=2016\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt0.val=1\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_1, ON);	
+            DeviceSetLevel(FAN1, ON);
 
         }else if(!device.Fan1State){
             NextionSendData(TX_TASK_TAG, "Control.t1.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t1.pco=63488\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.bt0.val=0\xFF\xFF\xFF");	
-            //gpio_set_level(DEVICE_1, OFF);
+            DeviceSetLevel(FAN1, OFF);
         }
 
         if(device.Fan2State){
             NextionSendData(TX_TASK_TAG, "Control.t4.txt=\"ON\"\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.t4.pco=2016\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt1.val=1\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_2, ON);
+            DeviceSetLevel(FAN2, ON);
 
         }else if(!device.Fan2State){
             NextionSendData(TX_TASK_TAG, "Control.t4.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t4.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt1.val=0\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_2, OFF);
+            DeviceSetLevel(FAN2, OFF);
         }
 
         if(device.LED1State){
             NextionSendData(TX_TASK_TAG, "Control.t6.txt=\"ON\"\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.t6.pco=2016\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt2.val=1\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_3, ON);
+            DeviceSetLevel(LED1, ON);
         }else if(!device.LED1State){
             NextionSendData(TX_TASK_TAG, "Control.t6.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t6.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt2.val=0\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_3, OFF);
+            DeviceSetLevel(LED1, OFF);
         }
 
         if(device.LED2State){
             NextionSendData(TX_TASK_TAG, "Control.t8.txt=\"ON\"\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.t8.pco=2016\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt3.val=1\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_4, ON);
+            DeviceSetLevel(LED2, ON);
         }else if(!device.LED2State){
             NextionSendData(TX_TASK_TAG, "Control.t8.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t8.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt3.val=0\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_4, OFF);
+            DeviceSetLevel(LED2, OFF);
         }
 
         if (device.Fan1State && device.Fan2State && device.LED1State && device.LED2State) {
             NextionSendData(TX_TASK_TAG, "Control.t9.txt=\"ON\"\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.t9.pco=2016\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt4.val=1\xFF\xFF\xFF");	
-            // gpio_set_level(DEVICE_1, ON);
-            // gpio_set_level(DEVICE_2, ON);
-            // gpio_set_level(DEVICE_3, ON);
-            // gpio_set_level(DEVICE_4, ON);
+            DeviceSetLevel(FAN1, ON);
+            DeviceSetLevel(FAN2, ON);
+            DeviceSetLevel(LED1, ON);
+            DeviceSetLevel(LED2, ON);
         } else if (! (device.Fan1State) ) {
             NextionSendData(TX_TASK_TAG, "Control.t9.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t9.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt4.val=0\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_1, OFF);
+            DeviceSetLevel(FAN1, OFF);
         }else if (! (device.Fan2State) ) {
             NextionSendData(TX_TASK_TAG, "Control.t9.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t9.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt4.val=0\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_2, OFF);
+            DeviceSetLevel(FAN2, OFF);
         }else if (! (device.LED1State) ) {
             NextionSendData(TX_TASK_TAG, "Control.t9.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t9.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt4.val=0\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_3, OFF);
+            DeviceSetLevel(LED1, OFF);
         }else if (! (device.LED2State) ) {
             NextionSendData(TX_TASK_TAG, "Control.t9.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t9.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt4.val=0\xFF\xFF\xFF");
-            //gpio_set_level(DEVICE_4, OFF);
+            DeviceSetLevel(LED2, OFF);
         }
         vTaskDelay(1000 / portTICK_PERIOD_MS); //Transmit every 10 seconds
     }
