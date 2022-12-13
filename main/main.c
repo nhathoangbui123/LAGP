@@ -4,8 +4,14 @@
 
 #include "rc522.h"
 #include "dht11.h"
+#include "mq135.h"
 #include "servo.h"
+#include "device.h"
+#include "nextion.h"
+#include "NVSDriver.h"
+
 #include "wifi.h"
+
 #include "common.h"
 
 static const char* TAG = "LAGP-MAIN";
@@ -75,22 +81,89 @@ void RC522Task(void* arg)
 		vTaskDelay(100 / portTICK_PERIOD_MS);
 	}
 }
+void RainTask(void* arg){
+	DeviceInit(RAIN_PIN, GPIO_MODE_INPUT);
+	while(1){
+		SensorData.rain = DeviceGetLevel(RAIN_PIN);
+		ESP_LOGI(TAG, "SensorData.rain = %d", SensorData.rain);
+		vTaskDelay(3000 / portTICK_PERIOD_MS);
+	}
+}
+void ReadNVS(void){
+	NVSDriverOpen("nvs");
 
+    char* Sdev1 = NULL;
+    NVSDriverRead("Sdev1", &Sdev1);
+    if(Sdev1!=NULL){
+        device.Fan1State = atoi(Sdev1);
+    }
+    free(Sdev1);
+
+    char* Sdev2 = NULL;
+    NVSDriverRead("Sdev2", &Sdev2);
+    if(Sdev2!=NULL){
+        device.Fan2State = atoi(Sdev2);
+    }
+    free(Sdev2);
+
+    char* Sdev3 = NULL;
+    NVSDriverRead("Sdev3", &Sdev3);
+    if(Sdev3!=NULL){
+        device.LED1State = atoi(Sdev3);
+    }
+    free(Sdev3);
+
+    char* Sdev4 = NULL;
+    NVSDriverRead("Sdev4", &Sdev4);
+    if(Sdev4!=NULL){
+        device.LED2State = atoi(Sdev4);
+    }
+    free(Sdev4);
+
+	if(NVSDriverRead("WN", &Param.WN)!=true){
+        Param.WN = "1";
+    }
+    if(NVSDriverRead("WP", &Param.WP)!=true){
+        Param.WP = "1";
+    }
+
+    NVSDriverClose();
+}
 void app_main()
 {
+	ESP_LOGI(TAG, "[APP] Startup..");
+    ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
+    ESP_LOGI(TAG, "[APP] IDF version: %s", esp_get_idf_version());
+
 	/* Initialize NVS partition */
 	esp_err_t ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
 		ESP_ERROR_CHECK(nvs_flash_init());
 	}
+	ReadNVS();
 	//wifi pre setup
-	Param.WN="NhatHoang";
-	Param.WP="01217818548";
-	wifi_init_sta();
+	Param.WN="Ambi";
+	Param.WP="1234ambi";
 
-	// attach(GPIO_NUM_18,400,2600,LEDC_CHANNEL_0,LEDC_TIMER_0);
-    // write_val(0);	
-    // vTaskDelay(1000/ portTICK_RATE_MS);
-	// write_val(90);
-    xTaskCreate(&RC522Task, "RC522Task", 8192, NULL, 5, NULL);
+	DeviceInit(FAN1, GPIO_MODE_OUTPUT);
+	DeviceInit(FAN2, GPIO_MODE_OUTPUT);
+	DeviceInit(LED1, GPIO_MODE_OUTPUT);
+	DeviceInit(LED2, GPIO_MODE_OUTPUT);
+
+	ServoAttach(SERVO1, 400, 2600, LEDC_CHANNEL_0, LEDC_TIMER_0);
+	ServoAttach(SERVO2, 400, 2600, LEDC_CHANNEL_1, LEDC_TIMER_1);
+
+	//Init Nextion HMI
+    NextionInit();
+    //Nextion RX Task
+    xTaskCreate(&NextionRXTask, "NextionRXTask", 1024*2, NULL, 1, NULL);
+    //Nextion TX Task
+    xTaskCreate(&NextionTXTask, "NextionTXTask", 1024*2, NULL, 2, NULL);
+
+	if(wifi_init_sta()){
+		DHT11Run();
+		MQ135Run();
+		xTaskCreate(&RainTask, "RainTask", 8192, NULL, 5, NULL);
+		//xTaskCreate(&RC522Task, "RC522Task", 8192, NULL, 5, NULL);
+	}
 }

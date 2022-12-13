@@ -15,7 +15,7 @@ static const char *TAG = "LAGP-DHT11";
 
 static esp_err_t DHT11WaitOrTimeout(uint16_t microSeconds, int level) 
 {
-    ESP_LOGI(TAG, "DHT11WaitOrTimeout");
+    //ESP_LOGI(TAG, "DHT11WaitOrTimeout");
     int micros_ticks = 0;
     while(gpio_get_level(dht_gpio) == level) { 
         if(micros_ticks++ > microSeconds) 
@@ -27,7 +27,7 @@ static esp_err_t DHT11WaitOrTimeout(uint16_t microSeconds, int level)
 
 static esp_err_t DHT11CheckCRC(uint8_t data[]) 
 {
-    ESP_LOGI(TAG, "DHT11CheckCRC");
+    //ESP_LOGI(TAG, "DHT11CheckCRC");
     if(data[4] == (data[0] + data[1] + data[2] + data[3]))
         return ESP_OK;
     else
@@ -36,7 +36,7 @@ static esp_err_t DHT11CheckCRC(uint8_t data[])
 
 static void DHT11SendStartSignal() 
 {
-    ESP_LOGI(TAG, "DHT11SendStartSignal");
+    //ESP_LOGI(TAG, "DHT11SendStartSignal");
     gpio_set_direction(dht_gpio, GPIO_MODE_OUTPUT);
     gpio_set_level(dht_gpio, 0);
     ets_delay_us(20 * 1000);
@@ -47,7 +47,7 @@ static void DHT11SendStartSignal()
 
 static esp_err_t DHT11CheckRespone() 
 {
-    ESP_LOGI(TAG, "DHT11CheckRespone");
+    //ESP_LOGI(TAG, "DHT11CheckRespone");
     /* Wait for next step ~80us*/
     if(DHT11WaitOrTimeout(80, 0) == ESP_ERR_TIMEOUT )
         return ESP_ERR_TIMEOUT ;
@@ -113,14 +113,14 @@ void DHT11Task(void *arg)
 {
     ESP_LOGI(TAG, "DHT11Task");
     DHT11Init(DHT11_PIN);
-    struct DHT11Data_t dth11_data;
+    struct DHT11Data_t dht11_data;
     while(1)
     {
-        DHT11Read(&dth11_data);
-        ESP_LOGI(TAG, "Temperature: %d", dth11_data.temperature);
-        SensorData.temperature = dth11_data.temperature;
-        ESP_LOGI(TAG, "Humidity: %d", dth11_data.humidity);
-        SensorData.humidity = dth11_data.humidity;
+        DHT11Read(&dht11_data);
+        ESP_LOGI(TAG, "Temperature: %d", dht11_data.temperature);
+        SensorData.temperature = dht11_data.temperature;
+        ESP_LOGI(TAG, "Humidity: %d", dht11_data.humidity);
+        SensorData.humidity = dht11_data.humidity;
         vTaskDelay(3000 / portTICK_RATE_MS);
     }
 }

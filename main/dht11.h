@@ -7,11 +7,11 @@
 extern "C" {
 #endif
 
-// enum dht11_status {
-//     DHT11_CRC_ERROR = -2, 
-//     DHT11_TIMEOUT_ERROR, 
-//     DHT11_OK
-// };
+enum dht11_status {
+    DHT11_CRC_ERROR = -2, 
+    DHT11_TIMEOUT_ERROR, 
+    DHT11_OK
+};
 
 struct DHT11Data_t {
     int temperature;
