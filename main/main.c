@@ -1,6 +1,14 @@
 #include <esp_log.h>
+#include <stdio.h>
+#include <string.h>
 #include <inttypes.h>
+
 #include "nvs_flash.h"
+#include "lwip/sockets.h"
+#include "lwip/dns.h"
+#include "lwip/netdb.h"
+
+#include "mqtt_client.h"
 
 #include "rc522.h"
 #include "dht11.h"
@@ -19,7 +27,7 @@ static const char* TAG = "LAGP-MAIN";
 Uid uid;
 
 spi_device_handle_t spi;
-
+esp_mqtt_client_handle_t mqtt_client;
 bool RC522Compare(uint8_t *buffer, uint8_t bufferSize) 
 {
 
@@ -129,6 +137,159 @@ void ReadNVS(void){
 
     NVSDriverClose();
 }
+void DeviceTask(void *arg){
+	DeviceInit(FAN1, GPIO_MODE_OUTPUT);
+	DeviceInit(FAN2, GPIO_MODE_OUTPUT);
+	DeviceInit(LED1, GPIO_MODE_OUTPUT);
+	DeviceInit(LED2, GPIO_MODE_OUTPUT);
+	while (1)
+	{
+		if(device.LED1State!=device.LED1StateO){
+			if(device.LED1State){
+				DeviceSetLevel(LED1, ON);
+			}else{
+				DeviceSetLevel(LED1, OFF);
+			}
+			device.LED1StateO = device.LED1State;
+		}
+
+		if(device.LED2State!=device.LED2StateO){
+			if(device.LED2State){
+				DeviceSetLevel(LED2, ON);
+			}else{
+				DeviceSetLevel(LED2, OFF);
+			}
+			device.LED2StateO = device.LED2State;
+		}
+
+		if(device.Fan1State!=device.Fan1StateO){
+			if(device.Fan1State){
+				DeviceSetLevel(FAN1, ON);
+			}else{
+				DeviceSetLevel(FAN1, OFF);
+			}
+			device.Fan1StateO = device.Fan1State;
+		}
+
+		if(device.Fan2State!=device.Fan2StateO){
+			if(device.Fan2State){
+				DeviceSetLevel(FAN2, ON);
+			}else{
+				DeviceSetLevel(FAN2, OFF);
+			}
+			device.Fan2StateO = device.Fan2State;
+		}
+
+		vTaskDelay(10/ portTICK_PERIOD_MS);
+	}
+}
+static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
+{
+    esp_mqtt_client_handle_t client = event->client;
+    mqtt_client = event->client;
+    int msg_id;
+    // your_context_t *context = event->context;
+    switch (event->event_id) {
+        case MQTT_EVENT_CONNECTED:
+            ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+            msg_id = esp_mqtt_client_publish(client, IO_TOPIC, "1000", 0, 1, 0);
+            ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+
+            msg_id = esp_mqtt_client_subscribe(client, LED1_TOPIC, 0);
+            ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+
+            msg_id = esp_mqtt_client_subscribe(client, LED2_TOPIC, 0);
+            ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+
+			msg_id = esp_mqtt_client_subscribe(client, FAN1_TOPIC, 0);
+            ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+
+            msg_id = esp_mqtt_client_subscribe(client, FAN2_TOPIC, 0);
+            ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+
+            break;
+        case MQTT_EVENT_DISCONNECTED:
+            ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+            break;
+
+        case MQTT_EVENT_SUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
+            break;
+        case MQTT_EVENT_UNSUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+            break;
+        case MQTT_EVENT_PUBLISHED:
+            ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+            break;
+        case MQTT_EVENT_DATA:
+            ESP_LOGI(TAG, "MQTT_EVENT_DATA");
+            printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
+            printf("DATA=%.*s\r\n", event->data_len, event->data);
+
+			char topic[20];
+			char data[4];
+			sprintf(topic, "%.*s\r\n", event->topic_len, event->topic);
+			// ESP_LOGI(TAG, "topic = %s", topic);
+			// ESP_LOGI(TAG, "len = %d", strlen(topic));
+
+			if(strcmp(topic, "nhathoang/feeds/led1\r\n") == 0){
+				ESP_LOGI(TAG, "nhathoang/feeds/led1");
+				sprintf(data, "%.*s\r\n", event->data_len, event->data);
+				printf("data=%s", data);
+				if(strcmp(data, "0\r\n") == 0){
+					device.LED1State = 0;
+				}else{
+					device.LED1State = 1;
+				}
+			}else if(strcmp(topic,"nhathoang/feeds/led2\r\n") == 0){
+				ESP_LOGI(TAG, "nhathoang/feeds/led2");
+				sprintf(data, "%.*s\r\n", event->data_len, event->data);
+				printf("data=%s", data);
+				if(strcmp(data, "0\r\n") == 0){
+					device.LED2State = 0;
+				}else{
+					device.LED2State = 1;
+				}
+			}else if(strcmp(topic,"nhathoang/feeds/fan1\r\n") == 0){
+				ESP_LOGI(TAG, "nhathoang/feeds/fan1");
+				sprintf(data, "%.*s\r\n", event->data_len, event->data);
+				printf("data=%s", data);
+				if(strcmp(data, "0\r\n") == 0){
+					device.Fan1State = 0;
+				}else{
+					device.Fan1State = 1;
+				}
+			}else if(strcmp(topic,"nhathoang/feeds/fan2\r\n") == 0){
+				ESP_LOGI(TAG, "nhathoang/feeds/fan2");
+				sprintf(data, "%.*s\r\n", event->data_len, event->data);
+				printf("data=%s", data);
+				if(strcmp(data, "0\r\n") == 0){
+					device.Fan2State = 0;
+				}else{
+					device.Fan2State = 1;
+				}
+			}
+            break;
+        case MQTT_EVENT_ERROR:
+            ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+            break;
+        default:
+            ESP_LOGI(TAG, "Other event id:%d", event->event_id);
+            break;
+    }
+    return ESP_OK;
+}
+static void mqtt_app_start(void)
+{
+    esp_mqtt_client_config_t mqtt_cfg = {
+        .uri = BROKER_URL,
+        .event_handle = mqtt_event_handler,
+        // .user_context = (void *)your_context
+    };
+
+    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
+    esp_mqtt_client_start(client);
+}
 void app_main()
 {
 	ESP_LOGI(TAG, "[APP] Startup..");
@@ -140,15 +301,11 @@ void app_main()
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
 		ESP_ERROR_CHECK(nvs_flash_init());
 	}
+	//Read NVS 
 	ReadNVS();
 	//wifi pre setup
-	Param.WN="Ambi";
-	Param.WP="1234ambi";
-
-	DeviceInit(FAN1, GPIO_MODE_OUTPUT);
-	DeviceInit(FAN2, GPIO_MODE_OUTPUT);
-	DeviceInit(LED1, GPIO_MODE_OUTPUT);
-	DeviceInit(LED2, GPIO_MODE_OUTPUT);
+	Param.WN = "CODER HOUSE";
+	Param.WP = "88888888";
 
 	ServoAttach(SERVO1, 400, 2600, LEDC_CHANNEL_0, LEDC_TIMER_0);
 	ServoAttach(SERVO2, 400, 2600, LEDC_CHANNEL_1, LEDC_TIMER_1);
@@ -159,11 +316,13 @@ void app_main()
     xTaskCreate(&NextionRXTask, "NextionRXTask", 1024*2, NULL, 1, NULL);
     //Nextion TX Task
     xTaskCreate(&NextionTXTask, "NextionTXTask", 1024*2, NULL, 2, NULL);
-
+	//Device control Task
+	xTaskCreate(&DeviceTask, "DeviceTask", 1024*2, NULL, 4, NULL);
 	if(wifi_init_sta()){
-		DHT11Run();
-		MQ135Run();
-		xTaskCreate(&RainTask, "RainTask", 8192, NULL, 5, NULL);
-		//xTaskCreate(&RC522Task, "RC522Task", 8192, NULL, 5, NULL);
+		mqtt_app_start();
+		// DHT11Run();
+		// MQ135Run();
+		// xTaskCreate(&RainTask, "RainTask", 8192, NULL, 5, NULL);
+		// xTaskCreate(&RC522Task, "RC522Task", 8192, NULL, 5, NULL);
 	}
 }
