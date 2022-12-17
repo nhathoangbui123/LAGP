@@ -1,5 +1,6 @@
 #include "nextion.h"
 #include "common.h"
+#include "device.h"
 #include "cJSON.h"
 #include "cmd.h"
 
@@ -36,38 +37,21 @@ void NextionTXTask(void* arg)
     while (1) {
         ESP_LOGD(TX_TASK_TAG, "Free memory: %d bytes", esp_get_free_heap_size());
 
-        // sprintf(cmd, "Monitor.power_v.txt=\"%0.3fKWh\"\xFF\xFF\xFF",Param.energy);
-        // ESP_LOGD(TX_TASK_TAG, "Monitor.power_v.txt=%0.3fKWh", Param.energy);
-        // sendData(TX_TASK_TAG, cmd);	
+        sprintf(cmd, "Monitor.power_v.txt=\"%d*C\"\xFF\xFF\xFF", SensorData.temperature);
+        ESP_LOGD(TX_TASK_TAG, "Monitor.power_v.txt=%d*C", SensorData.temperature);
+        NextionSendData(TX_TASK_TAG, cmd);	
 
-        // sprintf(cmd, "Monitor.freq_v.txt=\"%0.1fHz\"\xFF\xFF\xFF",Param.frequency);
-        // ESP_LOGD(TX_TASK_TAG, "Monitor.freq_v.txt=%0.1fHz", Param.frequency);
-        // sendData(TX_TASK_TAG, cmd);
+        sprintf(cmd, "Monitor.freq_v.txt=\"%d%%RH\"\xFF\xFF\xFF", SensorData.humidity);
+        ESP_LOGD(TX_TASK_TAG, "Monitor.freq_v.txt=%d%%RH", SensorData.humidity);
+        NextionSendData(TX_TASK_TAG, cmd);
 
-        // sprintf(cmd, "Monitor.vol_v.txt=\"%0.1fV\"\xFF\xFF\xFF",Param.voltage);
-        // ESP_LOGD(TX_TASK_TAG, "Monitor.vol_v.txt=%0.1fV", Param.voltage);
-        // sendData(TX_TASK_TAG, cmd);
+        sprintf(cmd, "Monitor.vol_v.txt=\"%d\"\xFF\xFF\xFF", SensorData.mq135);
+        ESP_LOGD(TX_TASK_TAG, "Monitor.vol_v.txt=%d", SensorData.mq135);
+        NextionSendData(TX_TASK_TAG, cmd);
 
-        // sprintf(cmd, "Monitor.amp_v.txt=\"%0.2fA\"\xFF\xFF\xFF",Param.current);
-        // ESP_LOGD(TX_TASK_TAG, "Monitor.amp_v.txt=%0.2fA", Param.current);
-        // sendData(TX_TASK_TAG, cmd);
-
-        // //electric price and total cost
-        // sprintf(cmd, "Check.vndPerKwh.txt=\"%d VND/kWh\"\xFF\xFF\xFF",Param.EP);
-        // ESP_LOGD(TX_TASK_TAG, "Check.vndPerKwh.txt=%d VND/kWh", Param.EP);
-        // sendData(TX_TASK_TAG, cmd);
-
-        // sprintf(cmd, "Check.t0.txt=\"%0.1f VND\"\xFF\xFF\xFF",Param.cost);
-        // ESP_LOGD(TX_TASK_TAG, "Check.t0.txt=%0.1f VND", Param.cost);
-        // sendData(TX_TASK_TAG, cmd);
-
-        // sprintf(cmd, "Check.t5.txt=\"%0.1f VND\"\xFF\xFF\xFF",Param.cost1);
-        // ESP_LOGD(TX_TASK_TAG, "Check.t5.txt=%0.1f VND", Param.cost1);
-        // sendData(TX_TASK_TAG, cmd);
-
-        // sprintf(cmd, "Check.t3.txt=\"%0.1f VND\"\xFF\xFF\xFF",Param.cost2);
-        // ESP_LOGD(TX_TASK_TAG, "Check.t3.txt=%0.1f VND", Param.cost2);
-        // sendData(TX_TASK_TAG, cmd);
+        sprintf(cmd, "Monitor.amp_v.txt=\"%d\"\xFF\xFF\xFF", SensorData.rain);
+        ESP_LOGD(TX_TASK_TAG, "Monitor.amp_v.txt=%d", SensorData.rain);
+        NextionSendData(TX_TASK_TAG, cmd);
 
         //wifi name and wifi password
         sprintf(cmd, "Setting.wifi.txt=\"%s\"\xFF\xFF\xFF",Param.WN);
@@ -78,101 +62,85 @@ void NextionTXTask(void* arg)
         ESP_LOGD(TX_TASK_TAG, "Setting.pwd.txt=%s", Param.WP);
         NextionSendData(TX_TASK_TAG, cmd);
 
-        //threshold
-        // sprintf(cmd, "Monitor_Dev1.thr_dev1.txt=\"%d W\"\xFF\xFF\xFF",Param.T1);
-        // ESP_LOGD(TX_TASK_TAG, "Monitor_Dev1.thr_dev1.txt=%d W", Param.T1);
-        // NextionSendData(TX_TASK_TAG, cmd);
 
-        // sprintf(cmd, "Monitor_Dev2.thr_dev2.txt=\"%d W\"\xFF\xFF\xFF",Param.T2);
-        // ESP_LOGD(TX_TASK_TAG, "Monitor_Dev2.thr_dev2.txt=%d W", Param.T2);
-        // NextionSendData(TX_TASK_TAG, cmd);
-
-        // sprintf(cmd, "Monitor_Dev3.thr_dev3.txt=\"%d W\"\xFF\xFF\xFF",Param.T3);
-        // ESP_LOGD(TX_TASK_TAG, "Monitor_Dev3.thr_dev3.txt=%d W", Param.T3);
-        // NextionSendData(TX_TASK_TAG, cmd);
-
-        // sprintf(cmd, "Monitor_Dev4.thr_dev4.txt=\"%d W\"\xFF\xFF\xFF",Param.T4);
-        // ESP_LOGD(TX_TASK_TAG, "Monitor_Dev4.thr_dev4.txt=%d W", Param.T4);
-        // NextionSendData(TX_TASK_TAG, cmd);
-
-        if(device.Fan1State){
+        if(device.LED1State){
             NextionSendData(TX_TASK_TAG, "Control.t1.txt=\"ON\"\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.t1.pco=2016\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt0.val=1\xFF\xFF\xFF");
-            DeviceSetLevel(FAN1, ON);
+            //DeviceSetLevel(FAN1, ON);
 
-        }else if(!device.Fan1State){
+        }else if(!device.LED1State){
             NextionSendData(TX_TASK_TAG, "Control.t1.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t1.pco=63488\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.bt0.val=0\xFF\xFF\xFF");	
-            DeviceSetLevel(FAN1, OFF);
-        }
-
-        if(device.Fan2State){
-            NextionSendData(TX_TASK_TAG, "Control.t4.txt=\"ON\"\xFF\xFF\xFF");	
-            NextionSendData(TX_TASK_TAG, "Control.t4.pco=2016\xFF\xFF\xFF");	
-            NextionSendData(TX_TASK_TAG, "Control.bt1.val=1\xFF\xFF\xFF");
-            DeviceSetLevel(FAN2, ON);
-
-        }else if(!device.Fan2State){
-            NextionSendData(TX_TASK_TAG, "Control.t4.txt=\"OFF\"\xFF\xFF\xFF");
-            NextionSendData(TX_TASK_TAG, "Control.t4.pco=63488\xFF\xFF\xFF");	
-            NextionSendData(TX_TASK_TAG, "Control.bt1.val=0\xFF\xFF\xFF");
-            DeviceSetLevel(FAN2, OFF);
-        }
-
-        if(device.LED1State){
-            NextionSendData(TX_TASK_TAG, "Control.t6.txt=\"ON\"\xFF\xFF\xFF");	
-            NextionSendData(TX_TASK_TAG, "Control.t6.pco=2016\xFF\xFF\xFF");	
-            NextionSendData(TX_TASK_TAG, "Control.bt2.val=1\xFF\xFF\xFF");
-            DeviceSetLevel(LED1, ON);
-        }else if(!device.LED1State){
-            NextionSendData(TX_TASK_TAG, "Control.t6.txt=\"OFF\"\xFF\xFF\xFF");
-            NextionSendData(TX_TASK_TAG, "Control.t6.pco=63488\xFF\xFF\xFF");	
-            NextionSendData(TX_TASK_TAG, "Control.bt2.val=0\xFF\xFF\xFF");
-            DeviceSetLevel(LED1, OFF);
+            //DeviceSetLevel(FAN1, OFF);
         }
 
         if(device.LED2State){
+            NextionSendData(TX_TASK_TAG, "Control.t4.txt=\"ON\"\xFF\xFF\xFF");	
+            NextionSendData(TX_TASK_TAG, "Control.t4.pco=2016\xFF\xFF\xFF");	
+            NextionSendData(TX_TASK_TAG, "Control.bt1.val=1\xFF\xFF\xFF");
+            //DeviceSetLevel(FAN2, ON);
+
+        }else if(!device.LED2State){
+            NextionSendData(TX_TASK_TAG, "Control.t4.txt=\"OFF\"\xFF\xFF\xFF");
+            NextionSendData(TX_TASK_TAG, "Control.t4.pco=63488\xFF\xFF\xFF");	
+            NextionSendData(TX_TASK_TAG, "Control.bt1.val=0\xFF\xFF\xFF");
+            //DeviceSetLevel(FAN2, OFF);
+        }
+
+        if(device.Fan1State){
+            NextionSendData(TX_TASK_TAG, "Control.t6.txt=\"ON\"\xFF\xFF\xFF");	
+            NextionSendData(TX_TASK_TAG, "Control.t6.pco=2016\xFF\xFF\xFF");	
+            NextionSendData(TX_TASK_TAG, "Control.bt2.val=1\xFF\xFF\xFF");
+            //DeviceSetLevel(LED1, ON);
+        }else if(!device.Fan1State){
+            NextionSendData(TX_TASK_TAG, "Control.t6.txt=\"OFF\"\xFF\xFF\xFF");
+            NextionSendData(TX_TASK_TAG, "Control.t6.pco=63488\xFF\xFF\xFF");	
+            NextionSendData(TX_TASK_TAG, "Control.bt2.val=0\xFF\xFF\xFF");
+            //DeviceSetLevel(LED1, OFF);
+        }
+
+        if(device.Fan2State){
             NextionSendData(TX_TASK_TAG, "Control.t8.txt=\"ON\"\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.t8.pco=2016\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt3.val=1\xFF\xFF\xFF");
-            DeviceSetLevel(LED2, ON);
-        }else if(!device.LED2State){
+            //DeviceSetLevel(LED2, ON);
+        }else if(!device.Fan2State){
             NextionSendData(TX_TASK_TAG, "Control.t8.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t8.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt3.val=0\xFF\xFF\xFF");
-            DeviceSetLevel(LED2, OFF);
+            //DeviceSetLevel(LED2, OFF);
         }
 
         if (device.Fan1State && device.Fan2State && device.LED1State && device.LED2State) {
             NextionSendData(TX_TASK_TAG, "Control.t9.txt=\"ON\"\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.t9.pco=2016\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt4.val=1\xFF\xFF\xFF");	
-            DeviceSetLevel(FAN1, ON);
-            DeviceSetLevel(FAN2, ON);
-            DeviceSetLevel(LED1, ON);
-            DeviceSetLevel(LED2, ON);
+            // DeviceSetLevel(FAN1, ON);
+            // DeviceSetLevel(FAN2, ON);
+            // DeviceSetLevel(LED1, ON);
+            // DeviceSetLevel(LED2, ON);
         } else if (! (device.Fan1State) ) {
             NextionSendData(TX_TASK_TAG, "Control.t9.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t9.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt4.val=0\xFF\xFF\xFF");
-            DeviceSetLevel(FAN1, OFF);
+            //DeviceSetLevel(FAN1, OFF);
         }else if (! (device.Fan2State) ) {
             NextionSendData(TX_TASK_TAG, "Control.t9.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t9.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt4.val=0\xFF\xFF\xFF");
-            DeviceSetLevel(FAN2, OFF);
+            //DeviceSetLevel(FAN2, OFF);
         }else if (! (device.LED1State) ) {
             NextionSendData(TX_TASK_TAG, "Control.t9.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t9.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt4.val=0\xFF\xFF\xFF");
-            DeviceSetLevel(LED1, OFF);
+            //DeviceSetLevel(LED1, OFF);
         }else if (! (device.LED2State) ) {
             NextionSendData(TX_TASK_TAG, "Control.t9.txt=\"OFF\"\xFF\xFF\xFF");
             NextionSendData(TX_TASK_TAG, "Control.t9.pco=63488\xFF\xFF\xFF");	
             NextionSendData(TX_TASK_TAG, "Control.bt4.val=0\xFF\xFF\xFF");
-            DeviceSetLevel(LED2, OFF);
+            //DeviceSetLevel(LED2, OFF);
         }
         vTaskDelay(1000 / portTICK_PERIOD_MS); //Transmit every 10 seconds
     }
@@ -208,7 +176,7 @@ void NextionRXTask(void* arg)
         cJSON *command =cJSON_GetObjectItem(sub,"command");
         if(command){
             char *value_type_cmd =cJSON_GetObjectItem(sub,"command")->valuestring;
-            ESP_LOGD(RX_TASK_TAG, "command is %s",value_type_cmd);
+            ESP_LOGI(RX_TASK_TAG, "command is %s",value_type_cmd);
             ParseCmd(value_type_cmd, value_body);
         }
         //if(ParseCmd(value_type_cmd, value_body)==0)continue;

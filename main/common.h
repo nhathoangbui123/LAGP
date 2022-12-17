@@ -6,6 +6,14 @@
 #include "esp_log.h"
 #include "driver/gpio.h"
 
+#define BROKER_URL "mqtt://nhathoang:a3898eade09f42659ddfb1dd2c438b0c@io.adafruit.com"
+#define IO_TOPIC "nhathoang/feeds/test"
+
+#define LED1_TOPIC "nhathoang/feeds/led1"
+#define LED2_TOPIC "nhathoang/feeds/led2"
+#define FAN1_TOPIC "nhathoang/feeds/fan1"
+#define FAN2_TOPIC "nhathoang/feeds/fan2"
+
 // #define MQ135_PIN               GPIO_NUM_34
 #define DHT11_PIN               GPIO_NUM_5
 #define RAIN_PIN                GPIO_NUM_18
@@ -58,9 +66,13 @@ SensorData_t SensorData;
 typedef struct
 {
     int Fan1State;
+    int Fan1StateO;
     int Fan2State;
+    int Fan2StateO;
     int LED1State;
+    int LED1StateO;
     int LED2State;
+    int LED2StateO;
 }DevState_t;
 
 DevState_t device;
